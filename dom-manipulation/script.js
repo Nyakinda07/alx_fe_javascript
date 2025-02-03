@@ -1,17 +1,13 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Load quotes from local storage or initialize with default quotes
-    let quotes = JSON.parse(localStorage.getItem('quotes')) || [
-        { text: "The only limit to our realization of tomorrow is our doubts of today.", category: "Inspiration" },
-        { text: "Life is 10% what happens to us and 90% how we react to it.", category: "Life" },
-        { text: "Success is not final, failure is not fatal: It is the courage to continue that counts.", category: "Success" }
-    ];
-
+    const notification = document.getElementById('notification');
     const quoteDisplay = document.getElementById('quoteDisplay');
     const newQuoteBtn = document.getElementById('newQuote');
     const addQuoteBtn = document.getElementById('addQuoteBtn');
     const exportQuotesBtn = document.getElementById('exportQuotesBtn');
     const importFileInput = document.getElementById('importFile');
     const categoryFilter = document.getElementById('categoryFilter');
+
+    let quotes = JSON.parse(localStorage.getItem('quotes')) || [];
 
     // Function to save quotes to local storage
     const saveQuotes = () => {
@@ -101,6 +97,37 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         fileReader.readAsText(event.target.files[0]);
     };
+
+    // Simulate server interaction
+    const fetchQuotesFromServer = async () => {
+        try {
+            const response = await fetch('https://jsonplaceholder.typicode.com/posts');
+            const serverQuotes = await response.json();
+            const formattedQuotes = serverQuotes.map(post => ({
+                text: post.title,
+                category: 'Server'
+            }));
+
+            // Merge server quotes with local quotes
+            const mergedQuotes = [...quotes, ...formattedQuotes];
+            const uniqueQuotes = Array.from(new Set(mergedQuotes.map(quote => JSON.stringify(quote))))
+                .map(quote => JSON.parse(quote));
+
+            quotes = uniqueQuotes;
+            saveQuotes();
+            populateCategories();
+            showRandomQuote();
+
+            notification.textContent = 'Quotes synced with server successfully!';
+            notification.style.color = 'green';
+        } catch (error) {
+            notification.textContent = 'Failed to sync quotes with server.';
+            notification.style.color = 'red';
+        }
+    };
+
+    // Periodically fetch quotes from the server (every 30 seconds)
+    setInterval(fetchQuotesFromServer, 30000);
 
     // Event listeners
     newQuoteBtn.addEventListener('click', showRandomQuote);
