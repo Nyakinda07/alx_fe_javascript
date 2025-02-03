@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const addQuoteBtn = document.getElementById('addQuoteBtn');
     const exportQuotesBtn = document.getElementById('exportQuotesBtn');
     const importFileInput = document.getElementById('importFile');
+    const categoryFilter = document.getElementById('categoryFilter');
 
     // Function to save quotes to local storage
     const saveQuotes = () => {
@@ -19,12 +20,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Function to display a random quote
     const showRandomQuote = () => {
-        const randomIndex = Math.floor(Math.random() * quotes.length);
-        const randomQuote = quotes[randomIndex];
-        quoteDisplay.innerHTML = `<p>"${randomQuote.text}"</p><p><em>- ${randomQuote.category}</em></p>`;
+        const selectedCategory = categoryFilter.value;
+        const filteredQuotes = selectedCategory === 'all' ? quotes : quotes.filter(quote => quote.category === selectedCategory);
 
-        // Store the last viewed quote in session storage
-        sessionStorage.setItem('lastViewedQuote', JSON.stringify(randomQuote));
+        if (filteredQuotes.length > 0) {
+            const randomIndex = Math.floor(Math.random() * filteredQuotes.length);
+            const randomQuote = filteredQuotes[randomIndex];
+            quoteDisplay.innerHTML = `<p>"${randomQuote.text}"</p><p><em>- ${randomQuote.category}</em></p>`;
+        } else {
+            quoteDisplay.innerHTML = `<p>No quotes available for the selected category.</p>`;
+        }
+    };
+
+    // Function to populate categories in the dropdown
+    const populateCategories = () => {
+        const categories = [...new Set(quotes.map(quote => quote.category))];
+        categoryFilter.innerHTML = '<option value="all">All Categories</option>';
+        categories.forEach(category => {
+            const option = document.createElement('option');
+            option.value = category;
+            option.textContent = category;
+            categoryFilter.appendChild(option);
+        });
+
+        // Restore the last selected filter from local storage
+        const lastSelectedCategory = localStorage.getItem('lastSelectedCategory');
+        if (lastSelectedCategory) {
+            categoryFilter.value = lastSelectedCategory;
+        }
+    };
+
+    // Function to filter quotes based on the selected category
+    const filterQuotes = () => {
+        localStorage.setItem('lastSelectedCategory', categoryFilter.value);
+        showRandomQuote();
     };
 
     // Function to add a new quote
@@ -35,6 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (newQuoteText && newQuoteCategory) {
             quotes.push({ text: newQuoteText, category: newQuoteCategory });
             saveQuotes(); // Save updated quotes to local storage
+            populateCategories(); // Update the category dropdown
             alert('Quote added successfully!');
             document.getElementById('newQuoteText').value = '';
             document.getElementById('newQuoteCategory').value = '';
@@ -65,6 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const importedQuotes = JSON.parse(event.target.result);
             quotes.push(...importedQuotes);
             saveQuotes(); // Save updated quotes to local storage
+            populateCategories(); // Update the category dropdown
             alert('Quotes imported successfully!');
             showRandomQuote(); // Display a new random quote after importing
         };
@@ -76,13 +107,9 @@ document.addEventListener('DOMContentLoaded', () => {
     addQuoteBtn.addEventListener('click', addQuote);
     exportQuotesBtn.addEventListener('click', exportQuotes);
     importFileInput.addEventListener('change', importQuotes);
+    categoryFilter.addEventListener('change', filterQuotes);
 
-    // Display a random quote on page load
+    // Populate categories and display a random quote on page load
+    populateCategories();
     showRandomQuote();
-
-    // Display the last viewed quote from session storage (if available)
-    const lastViewedQuote = JSON.parse(sessionStorage.getItem('lastViewedQuote'));
-    if (lastViewedQuote) {
-        quoteDisplay.innerHTML = `<p>"${lastViewedQuote.text}"</p><p><em>- ${lastViewedQuote.category}</em></p>`;
-    }
 });
