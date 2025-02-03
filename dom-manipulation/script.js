@@ -98,9 +98,10 @@ document.addEventListener('DOMContentLoaded', () => {
         fileReader.readAsText(event.target.files[0]);
     };
 
-    // Simulate server interaction
-    const fetchQuotesFromServer = async () => {
+    // Function to sync quotes with the server
+    const syncQuotes = async () => {
         try {
+            // Fetch quotes from the server
             const response = await fetch('https://jsonplaceholder.typicode.com/posts');
             const serverQuotes = await response.json();
             const formattedQuotes = serverQuotes.map(post => ({
@@ -113,11 +114,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const uniqueQuotes = Array.from(new Set(mergedQuotes.map(quote => JSON.stringify(quote))))
                 .map(quote => JSON.parse(quote));
 
+            // Update local storage with merged quotes
             quotes = uniqueQuotes;
             saveQuotes();
             populateCategories();
             showRandomQuote();
 
+            // Notify the user
             notification.textContent = 'Quotes synced with server successfully!';
             notification.style.color = 'green';
         } catch (error) {
@@ -126,8 +129,34 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Periodically fetch quotes from the server (every 30 seconds)
-    setInterval(fetchQuotesFromServer, 30000);
+    // Function to periodically check for new quotes from the server
+    const startPeriodicSync = () => {
+        setInterval(syncQuotes, 30000); // Sync every 30 seconds
+    };
+
+    // Function to post quotes to the server (simulated)
+    const postQuotesToServer = async () => {
+        try {
+            const response = await fetch('https://jsonplaceholder.typicode.com/posts', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(quotes)
+            });
+
+            if (response.ok) {
+                notification.textContent = 'Quotes posted to server successfully!';
+                notification.style.color = 'green';
+            } else {
+                notification.textContent = 'Failed to post quotes to server.';
+                notification.style.color = 'red';
+            }
+        } catch (error) {
+            notification.textContent = 'Failed to post quotes to server.';
+            notification.style.color = 'red';
+        }
+    };
 
     // Event listeners
     newQuoteBtn.addEventListener('click', showRandomQuote);
@@ -139,4 +168,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Populate categories and display a random quote on page load
     populateCategories();
     showRandomQuote();
+
+    // Start periodic syncing with the server
+    startPeriodicSync();
+
+    // Post quotes to the server on page load (simulated)
+    postQuotesToServer();
 });
