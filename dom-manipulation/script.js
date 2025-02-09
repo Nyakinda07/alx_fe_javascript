@@ -80,8 +80,8 @@ async function syncQuotes() {
     // Save merged quotes to local storage
     localStorage.setItem('quotes', JSON.stringify(mergedQuotes));
 
-    // Notify the user of updates
-    showNotification('Quotes have been updated from the server.');
+    // Notify the user that quotes have been synced with the server
+    showNotification('Quotes synced with server!');
 
     // Refresh the displayed quotes
     refreshQuotesDisplay();
