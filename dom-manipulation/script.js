@@ -8,8 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Periodically fetch quotes from the server
     setInterval(async () => {
-        const serverQuotes = await fetchQuotesFromServer();
-        syncQuotesWithServer(serverQuotes);
+        await syncQuotes();
     }, 10000); // Fetch every 10 seconds
 });
 
@@ -29,18 +28,50 @@ function saveQuotes() {
 // Function to fetch quotes from the server
 async function fetchQuotesFromServer() {
     try {
-        const response = await fetch('http://localhost:3000/quotes'); // Replace with your server URL
+        const response = await fetch('https://jsonplaceholder.typicode.com/posts');
         if (!response.ok) throw new Error('Failed to fetch quotes');
         const serverQuotes = await response.json();
-        return serverQuotes;
+        return serverQuotes.map(post => ({
+            id: post.id,
+            text: post.title,
+            author: `User ${post.userId}`,
+        }));
     } catch (error) {
         console.error('Error fetching quotes:', error);
         return [];
     }
 }
 
+// Function to post a new quote to the server
+async function postQuoteToServer(newQuote) {
+    try {
+        const response = await fetch('https://jsonplaceholder.typicode.com/posts', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                title: newQuote.text,
+                body: newQuote.author,
+                userId: 1, // Simulate a user ID
+            }),
+        });
+        if (!response.ok) throw new Error('Failed to post quote');
+        const postedQuote = await response.json();
+        return {
+            id: postedQuote.id,
+            text: postedQuote.title,
+            author: `User ${postedQuote.userId}`,
+        };
+    } catch (error) {
+        console.error('Error posting quote:', error);
+        return null;
+    }
+}
+
 // Function to sync local quotes with server quotes
-function syncQuotesWithServer(serverQuotes) {
+async function syncQuotes() {
+    const serverQuotes = await fetchQuotesFromServer();
     const localQuotes = JSON.parse(localStorage.getItem('quotes')) || [];
 
     // Merge server quotes with local quotes
@@ -92,6 +123,11 @@ function showNotification(message) {
     const notificationMessage = document.getElementById('notification-message');
     notificationMessage.textContent = message;
     notification.style.display = 'block';
+
+    // Hide the notification after 5 seconds
+    setTimeout(() => {
+        notification.style.display = 'none';
+    }, 5000);
 }
 
 // Function to resolve conflicts manually
@@ -109,10 +145,17 @@ function resolveConflict() {
 }
 
 // Function to add a new quote
-function addQuote(newQuote) {
+async function addQuote(newQuote) {
+    // Add the quote locally
     quotes.push(newQuote);
     saveQuotes();
     refreshQuotesDisplay();
+
+    // Post the quote to the server
+    const postedQuote = await postQuoteToServer(newQuote);
+    if (postedQuote) {
+        console.log('Quote posted to server:', postedQuote);
+    }
 }
 
 // Function to import quotes from a JSON file
