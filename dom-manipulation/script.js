@@ -98,10 +98,9 @@ document.addEventListener('DOMContentLoaded', () => {
         fileReader.readAsText(event.target.files[0]);
     };
 
-    // Function to sync quotes with the server
-    const syncQuotes = async () => {
+    // Function to fetch quotes from the server
+    const fetchQuotesFromServer = async () => {
         try {
-            // Fetch quotes from the server
             const response = await fetch('https://jsonplaceholder.typicode.com/posts');
             const serverQuotes = await response.json();
             const formattedQuotes = serverQuotes.map(post => ({
@@ -124,17 +123,12 @@ document.addEventListener('DOMContentLoaded', () => {
             notification.textContent = 'Quotes synced with server successfully!';
             notification.style.color = 'green';
         } catch (error) {
-            notification.textContent = 'Failed to sync quotes with server.';
+            notification.textContent = 'Failed to fetch quotes from server.';
             notification.style.color = 'red';
         }
     };
 
-    // Function to periodically check for new quotes from the server
-    const startPeriodicSync = () => {
-        setInterval(syncQuotes, 30000); // Sync every 30 seconds
-    };
-
-    // Function to post quotes to the server (simulated)
+    // Function to post quotes to the server
     const postQuotesToServer = async () => {
         try {
             const response = await fetch('https://jsonplaceholder.typicode.com/posts', {
@@ -158,6 +152,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    // Function to sync quotes with the server
+    const syncQuotes = async () => {
+        await fetchQuotesFromServer(); // Fetch quotes from the server
+        await postQuotesToServer(); // Post quotes to the server
+    };
+
+    // Function to periodically check for new quotes from the server
+    const startPeriodicSync = () => {
+        setInterval(syncQuotes, 30000); // Sync every 30 seconds
+    };
+
     // Event listeners
     newQuoteBtn.addEventListener('click', showRandomQuote);
     addQuoteBtn.addEventListener('click', addQuote);
@@ -172,6 +177,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Start periodic syncing with the server
     startPeriodicSync();
 
-    // Post quotes to the server on page load (simulated)
-    postQuotesToServer();
+    // Perform an initial sync on page load
+    syncQuotes();
 });
